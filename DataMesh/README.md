@@ -4,8 +4,6 @@
 
 DataMesh is a decentralized storage protocol built on blockchain technology, designed to provide optimized sharding and high-speed queries. The system implements a node-based architecture with distributed data storage across multiple shards, providing reliability and performance for decentralized applications.
 
-Version: X.1.0 - Optimized Sharding & High-Speed Queries
-
 ## Key Features
 
 - **Decentralized Storage Management**: Store data across multiple nodes in a distributed manner

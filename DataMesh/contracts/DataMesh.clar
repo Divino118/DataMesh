@@ -1,5 +1,4 @@
 ;; DataMesh Decentralized Storage Protocol - AlphaX
-;; Version X.1 - Optimized Sharding & High-Speed Queries
 ;; Refactored for improved readability and expanded functionality
 
 ;; System Constants
