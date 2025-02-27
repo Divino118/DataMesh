@@ -1,4 +1,4 @@
-;; DataMesh Decentralized Storage System - AlphaX
+;; DataMesh Decentralized Storage Protocol - AlphaX
 ;; Version X.1 - Optimized Sharding & High-Speed Queries
 ;; Refactored for improved readability and expanded functionality
 
@@ -11,9 +11,16 @@
 (define-constant ERROR_NODE_NOT_FOUND (err u204))
 (define-constant ERROR_SYSTEM_INACTIVE (err u205))
 (define-constant ERROR_CAPACITY_EXCEEDED (err u206))
+(define-constant ERROR_INVALID_STRING (err u207))
 (define-constant MINIMUM_STAKE_REQUIREMENT u5000)
 (define-constant MAX_EFFICIENCY_RATING u100)
 (define-constant DEFAULT_TIMEOUT_LIMIT u1000)
+(define-constant MAX_QUERY_ID u1000000)
+(define-constant MAX_CONFIG_ID u1000)
+(define-constant MAX_SHARD_ID u10000)
+(define-constant MAX_NODE_ID u10000)
+(define-constant MAX_COMPLEXITY u1000000)
+(define-constant MIN_COMPLEXITY u1)
 
 ;; Global State Variables
 (define-data-var system-status bool true)
@@ -91,6 +98,53 @@
     }
 )
 
+;; String Validation Functions
+(define-private (valid-type-string (type-str (string-ascii 64)))
+    (and 
+        (> (len type-str) u0)
+        (<= (len type-str) u64)
+    )
+)
+
+(define-private (valid-path-string (path-str (string-ascii 256)))
+    (and 
+        (> (len path-str) u0)
+        (<= (len path-str) u256)
+    )
+)
+
+(define-private (valid-strategy-string (strategy-str (string-ascii 32)))
+    (and 
+        (> (len strategy-str) u0)
+        (<= (len strategy-str) u32)
+    )
+)
+
+;; ID Validation Functions
+(define-private (valid-shard-id (shard-id uint))
+    (< shard-id MAX_SHARD_ID)
+)
+
+(define-private (valid-node-id (node-id uint))
+    (< node-id MAX_NODE_ID)
+)
+
+(define-private (valid-query-id (query-id uint))
+    (< query-id MAX_QUERY_ID)
+)
+
+(define-private (valid-config-id (config-id uint))
+    (< config-id MAX_CONFIG_ID)
+)
+
+;; Value Validation Functions
+(define-private (valid-complexity (complexity uint))
+    (and
+        (>= complexity MIN_COMPLEXITY)
+        (<= complexity MAX_COMPLEXITY)
+    )
+)
+
 ;; Shard Management Functions
 (define-public (create-shard 
     (shard-id uint)
@@ -105,6 +159,8 @@
             (asserts! (is-eq tx-sender SYSTEM_ADMIN) ERROR_UNAUTHORIZED)
             (asserts! (var-get system-status) ERROR_SYSTEM_INACTIVE)
             (asserts! (valid-range key-start key-end) ERROR_INVALID_PARAMS)
+            (asserts! (valid-shard-id shard-id) ERROR_INVALID_PARAMS)
+            (asserts! (valid-type-string shard-type) ERROR_INVALID_STRING)
             (asserts! (is-none (get-shard-info shard-id)) ERROR_INVALID_SHARD)
             
             (map-set StorageShards
@@ -137,6 +193,10 @@
         (asserts! (var-get system-status) ERROR_SYSTEM_INACTIVE)
         (asserts! (>= staked-amount MINIMUM_STAKE_REQUIREMENT) ERROR_INSUFFICIENT_COLLATERAL)
         (asserts! (valid-range online-start online-end) ERROR_INVALID_PARAMS)
+        (asserts! (valid-node-id node-id) ERROR_INVALID_PARAMS)
+        (asserts! (valid-type-string node-type) ERROR_INVALID_STRING)
+        (asserts! (valid-path-string store-location) ERROR_INVALID_STRING)
+        (asserts! (valid-path-string service-url) ERROR_INVALID_STRING)
         (asserts! (is-none (get-node-info node-id)) ERROR_INVALID_PARAMS)
         
         (map-set StorageNodes
@@ -180,6 +240,9 @@
     (begin
         (asserts! (is-eq tx-sender SYSTEM_ADMIN) ERROR_UNAUTHORIZED)
         (asserts! (var-get system-status) ERROR_SYSTEM_INACTIVE)
+        (asserts! (valid-query-id query-id) ERROR_INVALID_PARAMS)
+        (asserts! (valid-node-id target-node) ERROR_INVALID_PARAMS)
+        (asserts! (valid-complexity max-complexity) ERROR_INVALID_PARAMS)
         (asserts! (node-exists target-node) ERROR_NODE_NOT_FOUND)
         
         (map-set QueryConfig
@@ -206,6 +269,8 @@
     (begin
         (asserts! (is-eq tx-sender SYSTEM_ADMIN) ERROR_UNAUTHORIZED)
         (asserts! (var-get system-status) ERROR_SYSTEM_INACTIVE)
+        (asserts! (valid-config-id config-id) ERROR_INVALID_PARAMS)
+        (asserts! (valid-strategy-string distribution-strategy) ERROR_INVALID_STRING)
         (asserts! (valid-storage-config max-shard-size replication-factor required-consistency) ERROR_INVALID_PARAMS)
         
         (map-set StorageConfig
